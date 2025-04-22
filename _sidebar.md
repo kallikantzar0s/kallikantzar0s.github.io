@@ -1,4 +1,6 @@
-- Getting Started
-  - [Intro](docs/intro.md)
-- Pentesting
-  - [Web](docs/pentest/web.md)
+- Network Pentest
+  - [Note 1](docs/network_pentest/note1.md)
+  - [Note 2](docs/network_pentest/note2.md)
+- Web Pentest
+  - [Note 1](docs/web_pentest/note1.md)
+  - [Note 2](docs/web_pentest/note2.md)
