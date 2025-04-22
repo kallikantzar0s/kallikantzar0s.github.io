@@ -2,19 +2,42 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Your Notes</title>
+  <title>Kallikantzaros Notes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/themes/vue.css" />
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/themes/vue.css">
+  <style>
+    .preview {
+      margin-bottom: 2em;
+    }
+    .preview h2 {
+      margin: 0 0 0.3em;
+    }
+    .preview p {
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <div class="preview">
+      <h2><a href="#/docs/network_pentest/note1.md">Network Pentest - Note 1</a></h2>
+      <p>This is a short preview of the first network pentest note...</p>
+      <a href="#/docs/network_pentest/note1.md">Read more →</a>
+    </div>
+
+    <div class="preview">
+      <h2><a href="#/docs/web_pentest/note1.md">Web Pentest - Note 1</a></h2>
+      <p>This is a short preview of the first web pentest note...</p>
+      <a href="#/docs/web_pentest/note1.md">Read more →</a>
+    </div>
+  </div>
+
   <script>
     window.$docsify = {
-      name: 'Notes',
-      repo: '',
       loadSidebar: true,
-      subMaxLevel: 2,
-      themeColor: '#42b983'
+      homepage: '',  // disables README.md auto-load
+      name: 'Kallikantzaros',
+      repo: '',
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
